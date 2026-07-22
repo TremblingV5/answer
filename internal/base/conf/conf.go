@@ -23,6 +23,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/apache/answer/internal/base/data"
 	"github.com/apache/answer/internal/base/path"
@@ -50,6 +51,12 @@ type envConfigOverrides struct {
 	SwaggerHost        string
 	SwaggerAddressPort string
 	SiteAddr           string
+	DbDriver           string
+	DbConnection       string
+	DbMaxOpenConn      string
+	DbMaxIdleConn      string
+	DbConnMaxLifeTime  string
+	CacheFilePath      string
 }
 
 func loadEnvs() (envOverrides *envConfigOverrides) {
@@ -57,6 +64,12 @@ func loadEnvs() (envOverrides *envConfigOverrides) {
 		SwaggerHost:        os.Getenv("SWAGGER_HOST"),
 		SwaggerAddressPort: os.Getenv("SWAGGER_ADDRESS_PORT"),
 		SiteAddr:           os.Getenv("SITE_ADDR"),
+		DbDriver:           os.Getenv("ANSWER_DB_DRIVER"),
+		DbConnection:       os.Getenv("ANSWER_DB_CONNECTION"),
+		DbMaxOpenConn:      os.Getenv("ANSWER_DB_MAX_OPEN_CONN"),
+		DbMaxIdleConn:      os.Getenv("ANSWER_DB_MAX_IDLE_CONN"),
+		DbConnMaxLifeTime:  os.Getenv("ANSWER_DB_CONN_MAX_LIFE_TIME"),
+		CacheFilePath:      os.Getenv("ANSWER_CACHE_FILE_PATH"),
 	}
 }
 
@@ -80,6 +93,15 @@ func (c *AllConfig) SetDefault() {
 	if c.UI == nil {
 		c.UI = &server.UI{}
 	}
+	if c.Data == nil {
+		c.Data = &Data{}
+	}
+	if c.Data.Database == nil {
+		c.Data.Database = &data.Database{}
+	}
+	if c.Data.Cache == nil {
+		c.Data.Cache = &data.CacheConf{}
+	}
 }
 
 func (c *AllConfig) SetEnvironmentOverrides() {
@@ -92,6 +114,30 @@ func (c *AllConfig) SetEnvironmentOverrides() {
 	}
 	if envs.SwaggerAddressPort != "" {
 		c.Swaggerui.Address = envs.SwaggerAddressPort
+	}
+	if envs.DbDriver != "" {
+		c.Data.Database.Driver = envs.DbDriver
+	}
+	if envs.DbConnection != "" {
+		c.Data.Database.Connection = envs.DbConnection
+	}
+	if envs.DbMaxOpenConn != "" {
+		if v, err := strconv.Atoi(envs.DbMaxOpenConn); err == nil {
+			c.Data.Database.MaxOpenConn = v
+		}
+	}
+	if envs.DbMaxIdleConn != "" {
+		if v, err := strconv.Atoi(envs.DbMaxIdleConn); err == nil {
+			c.Data.Database.MaxIdleConn = v
+		}
+	}
+	if envs.DbConnMaxLifeTime != "" {
+		if v, err := strconv.Atoi(envs.DbConnMaxLifeTime); err == nil {
+			c.Data.Database.ConnMaxLifeTime = v
+		}
+	}
+	if envs.CacheFilePath != "" {
+		c.Data.Cache.FilePath = envs.CacheFilePath
 	}
 }
 
